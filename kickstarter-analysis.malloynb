@@ -92,6 +92,6 @@ run: kickstarter -> {
     group_by: day_month_year.year 
     aggregate: total_backers  
     where: day_month_year.year <= @2016
-    limit: 10
+    limit: 8
      
 }

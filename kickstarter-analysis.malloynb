@@ -1,0 +1,97 @@
+>>>malloy
+source: kickstarter is duckdb.table('./kickstarter-camp.csv')  
+    extend {
+    rename: 
+    staff_pick is `Staff Pick` 
+    week_day is `Created At Weekday`
+    day_month_year is `Created At`
+    BlurbLen is `Blurb Len`
+    spotlight is `Spotlight`
+    pledge_amt is `PledgedUSD`
+    status is `Status`
+    goal is `Goal`
+    category is `Category`
+    measure:
+    avg_backers is avg(Backers) 
+    total_donations is count() 
+    avg_campaign_length is avg(CampaignLength)
+    avg_blurb_length is avg(BlurbLen)
+    avg_goal is avg(goal)
+    avg_pledge_amt is avg(pledge_amt)
+    false_spotlight is count() {where: spotlight = FALSE}
+    avg_pledge_percent is avg(pledge_percent)
+    total_backers is sum(Backers) 
+    dimension:
+    pledge_percent is 100*(pledge_amt/goal) 
+    year1 is day_month_year.year 
+
+}
+>>>markdown
+1. Which day of the week leads to the greatest average donations?
+2. Does being a staff pick affect the average number of backers?
+3. Do any of the following seem to be related to becoming a staff pick:
+   - Avg Campaign Length
+   - Avg Blurb Length
+   - Avg Goal
+4. For which category was it better (in terms of average pledge amount) to not be spotlighted?
+5. Why do campaigns fail? (Hint: look at average backers by status)
+6. Which category had the greatest average pledged as a percent of their goal? (Hint: create new field as `100 * (pledged / goal)`)
+7. From 2009 until the end of 2016, what is the general trend in the total number of backers?
+>>>malloy
+-- Which day of the week leads to the greatest average donations?
+run: kickstarter -> {
+    group_by: week_day
+    aggregate: total_donations
+}
+>>>malloy
+-- Does being a staff pick affect the average number of backers?
+run: kickstarter -> {
+    group_by: staff_pick
+    aggregate: avg_backers
+}
+>>>malloy
+-- Do any of the following seem to be related to becoming a staff pick? 
+--Avg campaign length 
+run: kickstarter -> {
+    group_by: staff_pick
+    aggregate: avg_campaign_length
+}
+--Blurb length 
+run: kickstarter -> {
+    group_by: staff_pick
+    aggregate: avg_blurb_length
+}
+--Goal
+run: kickstarter -> {
+    group_by: staff_pick
+    aggregate: avg_goal
+}
+>>>malloy
+>>>malloy
+-- For which category was it better (in terms of avg pledge amt) to not be spotlighted?
+run: kickstarter -> {
+    group_by: pledge_amt
+    aggregate: false_spotlight
+}
+>>>malloy
+-- Why do campaigns fail? (Hint: look at avg backers by status)
+run: kickstarter -> {
+    group_by: status
+    aggregate: avg_backers
+}
+>>>malloy
+-- Which category had the greatest avg pledged as a percent of their goal? (Hint: create new field as 100 * (pledged/goal))
+run: kickstarter -> {
+    group_by: category
+    aggregate: avg_pledge_percent
+}
+>>>malloy
+-- From 2009 until the end of 2016, what is the general trend in the total number of backers?
+# bar_chart
+run: kickstarter -> {
+    group_by: day_month_year.year 
+    aggregate: total_backers  
+    where: day_month_year.year <= @2016
+    limit: 10
+     
+}
